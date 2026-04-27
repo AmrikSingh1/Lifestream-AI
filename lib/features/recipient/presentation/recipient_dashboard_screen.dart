@@ -17,11 +17,12 @@ import '../../../../core/providers/verification_provider.dart';
 import '../../../../core/services/request_completion_service.dart';
 import '../../../../core/utils/pdf_actions.dart';
 import '../../../../core/router/app_router.dart';
+import '../../../../core/constants/gemini_key.dart';
 import '../../donor/presentation/widgets/email_otp_sheet.dart';
 import '../../home/presentation/donor_profile_sheet.dart';
 
 // ─── Gemini API Key ───────────────────────────────────────────────
-const _kGeminiApiKey = 'AIzaSyA8CsCYbEB79joG8JQD1ZW2tUAeA2LMAvk';
+const _kGeminiApiKey = geminiApiKey;
 
 class _ChatMessage {
   final String text;

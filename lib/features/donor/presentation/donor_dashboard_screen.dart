@@ -21,13 +21,14 @@ import '../../../../core/router/app_router.dart';
 import '../../../../core/services/request_completion_service.dart';
 import '../../../../core/utils/pdf_actions.dart';
 import '../../../../core/utils/certificate_generator.dart';
+import '../../../../core/constants/gemini_key.dart';
 import 'providers/donor_providers.dart';
 import 'radar_map_tab.dart';
 import 'widgets/email_otp_sheet.dart';
 
 // ─── Gemini API Key placeholder ───────────────────────────────────
 // Replace with your actual key from https://aistudio.google.com
-const _kGeminiApiKey = 'AIzaSyA8CsCYbEB79joG8JQD1ZW2tUAeA2LMAvk';
+const _kGeminiApiKey = geminiApiKey;
 
 // ─── Chat message model ───────────────────────────────────────────
 class _ChatMessage {
