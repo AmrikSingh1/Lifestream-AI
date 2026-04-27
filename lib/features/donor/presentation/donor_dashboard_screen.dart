@@ -27,7 +27,7 @@ import 'widgets/email_otp_sheet.dart';
 
 // ─── Gemini API Key placeholder ───────────────────────────────────
 // Replace with your actual key from https://aistudio.google.com
-const _kGeminiApiKey = 'AIzaSyBJT8MepIEQzfQTtpH5SgLefPDVefX2ZuI';
+const _kGeminiApiKey = 'AIzaSyA8CsCYbEB79joG8JQD1ZW2tUAeA2LMAvk';
 
 // ─── Chat message model ───────────────────────────────────────────
 class _ChatMessage {

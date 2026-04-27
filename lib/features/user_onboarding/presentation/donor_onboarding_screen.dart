@@ -59,6 +59,7 @@ class _DonorOnboardingScreenState
         setState(() => _isLoading = true);
         final pos = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.high,
+          timeLimit: const Duration(seconds: 10),
         );
         if (mounted) {
           setState(() {
@@ -115,6 +116,7 @@ class _DonorOnboardingScreenState
       }
       final pos = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
+        timeLimit: const Duration(seconds: 10),
       );
       setState(() {
         _lat = pos.latitude;

@@ -37,6 +37,45 @@ class _RecipientOnboardingScreenState
   String? _selectedBloodGroup;
   File? _profileImage;
   bool _isLoading = false;
+  bool _locationCaptured = false;
+  double? _lat;
+  double? _lon;
+
+  @override
+  void initState() {
+    super.initState();
+    _autoDetectLocation();
+  }
+
+  Future<void> _autoDetectLocation() async {
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) return;
+      
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.whileInUse || 
+          permission == LocationPermission.always) {
+        
+        setState(() => _isLoading = true);
+        final pos = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high,
+          timeLimit: const Duration(seconds: 10),
+        );
+        if (mounted) {
+          setState(() {
+            _lat = pos.latitude;
+            _lon = pos.longitude;
+            _locationCaptured = true;
+            _isLoading = false;
+          });
+          showSuccessSnackbar(context, 'Location auto-detected!');
+        }
+      }
+    } catch (e) {
+      debugPrint('Auto-detect location error: $e');
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   @override
   void dispose() {
@@ -68,40 +107,58 @@ class _RecipientOnboardingScreenState
     return await ref.getDownloadURL();
   }
 
+  Future<void> _captureLocation() async {
+    setState(() => _isLoading = true);
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        if (mounted) showErrorSnackbar(context, 'Location services are disabled.');
+        return;
+      }
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.deniedForever ||
+          permission == LocationPermission.denied) {
+        if (mounted) showErrorSnackbar(context, 'Location permission denied.');
+        return;
+      }
+      final pos = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+        timeLimit: const Duration(seconds: 10),
+      );
+      setState(() {
+        _lat = pos.latitude;
+        _lon = pos.longitude;
+        _locationCaptured = true;
+      });
+      if (mounted) showSuccessSnackbar(context, 'Location captured!');
+    } catch (e) {
+      if (mounted) showErrorSnackbar(context, 'Could not get location.');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   Future<void> _save() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     if (_selectedBloodGroup == null) {
       showErrorSnackbar(context, 'Please select blood group needed');
       return;
     }
+    if (!_locationCaptured || _lat == null || _lon == null) {
+      showErrorSnackbar(context, 'Please provide your location to continue');
+      return;
+    }
     setState(() => _isLoading = true);
     try {
-      double? lat;
-      double? lon;
-
-      try {
-        bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-        if (serviceEnabled) {
-          LocationPermission permission = await Geolocator.checkPermission();
-          if (permission == LocationPermission.denied) {
-            permission = await Geolocator.requestPermission();
-          }
-          if (permission != LocationPermission.denied && permission != LocationPermission.deniedForever) {
-            final pos = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
-            lat = pos.latitude;
-            lon = pos.longitude;
-          }
-        }
-      } catch (_) {
-        // Silently ignore or fallback
-      }
-
       final uid = FirebaseAuth.instance.currentUser!.uid;
       final imageUrl = await _uploadPhoto(uid);
 
       await FirebaseFirestore.instance.collection('users').doc(uid).update({
-        if (lat != null) 'latitude': lat,
-        if (lon != null) 'longitude': lon,
+        'latitude': _lat,
+        'longitude': _lon,
         'fullName': _nameController.text.trim(),
         'age': int.tryParse(_ageController.text.trim()),
         'phoneNumber': _phoneController.text.trim(),
@@ -378,6 +435,58 @@ class _RecipientOnboardingScreenState
                                   color: AppColors.textSecondary, size: 20),
                               validator: (v) =>
                                   v == null || v.trim().isEmpty ? 'Required' : null,
+                            ),
+                            const SizedBox(height: 20),
+
+                            // Location button
+                            GestureDetector(
+                              onTap: _isLoading ? null : _captureLocation,
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 14, horizontal: 20),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(16),
+                                  gradient: _locationCaptured
+                                      ? LinearGradient(colors: [
+                                          Colors.green.shade700,
+                                          Colors.green.shade500
+                                        ])
+                                      : const LinearGradient(
+                                          colors: AppColors.cardGradient),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: (_locationCaptured
+                                              ? Colors.green
+                                              : AppColors.royalBlue)
+                                          .withOpacity(0.3),
+                                      blurRadius: 12,
+                                    ),
+                                  ],
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      _locationCaptured
+                                          ? Icons.check_circle_rounded
+                                          : Icons.my_location_rounded,
+                                      color: Colors.white,
+                                      size: 20,
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Text(
+                                      _locationCaptured
+                                          ? 'Location Captured ✓'
+                                          : 'Use My Current Location',
+                                      style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 15),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
                           ],
                         ),

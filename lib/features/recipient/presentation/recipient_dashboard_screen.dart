@@ -21,7 +21,7 @@ import '../../donor/presentation/widgets/email_otp_sheet.dart';
 import '../../home/presentation/donor_profile_sheet.dart';
 
 // ─── Gemini API Key ───────────────────────────────────────────────
-const _kGeminiApiKey = 'AIzaSyBJT8MepIEQzfQTtpH5SgLefPDVefX2ZuI';
+const _kGeminiApiKey = 'AIzaSyA8CsCYbEB79joG8JQD1ZW2tUAeA2LMAvk';
 
 class _ChatMessage {
   final String text;
